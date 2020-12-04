@@ -19,9 +19,7 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="188063a4-41d5-4bec-aa35-c74365557f60" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/../hw2/inputFiles/snake1001.txt" beforeDir="false" />
-    </list>
+    <list default="true" id="188063a4-41d5-4bec-aa35-c74365557f60" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -233,10 +231,10 @@
       <screen x="0" y="0" width="1440" height="900" />
     </state>
     <state width="1398" height="304" key="GridCell.Tab.1.right/0.0.1440.900@0.0.1440.900" timestamp="1606865100837" />
-    <state x="208" y="31" key="SettingsEditor" timestamp="1605656298576">
+    <state x="208" y="31" key="SettingsEditor" timestamp="1607122833722">
       <screen x="0" y="0" width="1440" height="900" />
     </state>
-    <state x="208" y="31" key="SettingsEditor/0.0.1440.900@0.0.1440.900" timestamp="1605656298576" />
+    <state x="208" y="31" key="SettingsEditor/0.0.1440.900@0.0.1440.900" timestamp="1607122833722" />
     <state x="245" y="193" width="949" height="617" key="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory$2" timestamp="1606737059304">
       <screen x="0" y="0" width="1440" height="900" />
     </state>
