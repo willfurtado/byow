@@ -3,7 +3,8 @@
 
 A collaborative project by `William Furtado` and `Edward Liu`. Written in Java, our two-dimensional tile-based game finds itself
 well within the intersection of Nintendo's *Mario* and Namco's *Pac-Man*. The game supports basic movements using the *'W'*, *'A'*, *'S'*, and *'D'* keys
-and special interactions with certain tiles within the world.
+and special interactions with certain tiles within the world. A visual walkthrough of our game mechanics and additional features can be found within
+[this video](https://youtu.be/nj4U6LAy4kQ)
 
 Each world is pseudo-randomly generated from a seed entered by the current user; this randomness manifests in a unique player experience every time.
 The game supports any seed up Java's maximum long value (9,223,372,036,854,775,807). The world consists of rooms that are connected to each other
