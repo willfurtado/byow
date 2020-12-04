@@ -51,6 +51,9 @@ public class Tileset {
     public static final TETile COIN = new TETile('C', Color.YELLOW,
             Color.BLACK, "coin",
             "/Users/willfurtado/Desktop/cs61b/fa20-proj3-g579/proj3/byow/TileEngine/coin.png");
+    public static final TETile VORTEX = new TETile('V', Color.BLACK,
+            Color.BLACK, "vortex",
+            "/Users/willfurtado/Desktop/cs61b/fa20-proj3-g579/proj3/byow/TileEngine/vortex.png");
 }
 
 

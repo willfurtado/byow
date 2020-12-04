@@ -14,8 +14,8 @@ import java.awt.Font;
  */
 public class TERenderer {
     private static final int TILE_SIZE = 16;
-    private static final Font NORMAL_FONT = new Font("Source Code Pro", Font.PLAIN, 20);
-    private static final Font TITLE_FONT = new Font("Source Code Pro", Font.PLAIN, 28);
+    private static final Font NORMAL_FONT = new Font("Georgia", Font.PLAIN, 20);
+    private static final Font TITLE_FONT = new Font("Georgia", Font.PLAIN, 28);
     private int width;
     private int height;
     private int xOffset;
@@ -132,31 +132,31 @@ public class TERenderer {
     }
 
     /** Renders the finish screen depending on whether the user has won the game. */
-    public void renderFinishScreen(boolean wonGame) {
+    public void renderFinishScreen(boolean wonGame, int stepsTaken) {
         if (wonGame) {
-            drawWinningScreen(MapGenerator.getWidth(), MapGenerator.getHeight());
+            drawWinningScreen(MapGenerator.getWidth(), MapGenerator.getHeight(), stepsTaken);
         } else {
-            drawLosingScreen(MapGenerator.getWidth(), MapGenerator.getHeight());
+            drawLosingScreen(MapGenerator.getWidth(), MapGenerator.getHeight(), stepsTaken);
         }
     }
 
 
     /** Uses StdDraw library to draw Heads-Up Display (HUD) to our game. */
     private void drawHUD(int x, int y, int score, int stepsRemaining, TETile[][] world) {
-        StdDraw.enableDoubleBuffering();
         StdDraw.setPenColor(new Color(69, 102, 34));
         StdDraw.filledRectangle(x / 2, y, x / 2, MapGenerator.getHUDSize() / 2);
         StdDraw.setPenColor(StdDraw.WHITE);
         StdDraw.setFont(NORMAL_FONT);
         StdDraw.text(x / 2, y, "Tile: " + mouseTile(world) + "         "
                 + "Coins Collected: " + score + "         "
-                + "Steps Remaining: " + stepsRemaining);
+                + "Steps Remaining: " + stepsRemaining + "         "
+                + "Press 'E' to exchange 2 coins for 25 steps");
+        StdDraw.enableDoubleBuffering();
         StdDraw.show();
     }
 
     /** Uses StdDraw library to draw Heads-Up Display (HUD) to our game in replayMode. */
     private void drawHUDReplay(int x, int y, int score, int stepsRemaining, TETile[][] world) {
-        StdDraw.enableDoubleBuffering();
         StdDraw.setPenColor(new Color(69, 102, 34));
         StdDraw.filledRectangle(x / 2, y, x / 2, MapGenerator.getHUDSize() / 2);
         StdDraw.setPenColor(StdDraw.WHITE);
@@ -164,49 +164,54 @@ public class TERenderer {
         StdDraw.text(x / 2, y, "Instant Replay Zone" + "         "
                 + "Coins Collected: " + score + "         "
                 + "Steps Remaining: " + stepsRemaining);
+        StdDraw.enableDoubleBuffering();
         StdDraw.show();
     }
 
     /** Uses StdDraw library to draw Heads-Up Display (HUD) to our game in
      * replayMode at its conclusion. */
     private void drawHUDFinishReplay(int x, int y) {
-        StdDraw.enableDoubleBuffering();
         StdDraw.setPenColor(new Color(69, 102, 34));
         StdDraw.filledRectangle(x / 2, y, x / 2, MapGenerator.getHUDSize() / 2);
         StdDraw.setPenColor(StdDraw.WHITE);
         StdDraw.setFont(NORMAL_FONT);
         StdDraw.text(x / 2, y, "Instant Replay Has Finished!");
+        StdDraw.enableDoubleBuffering();
         StdDraw.show();
     }
 
     /** Uses StdDraw library to draw Heads-Up Display (HUD) to our game at its conclusion. */
     private void drawHUDFinish(int x, int y) {
-        StdDraw.enableDoubleBuffering();
         StdDraw.setPenColor(new Color(69, 102, 34));
         StdDraw.filledRectangle(x / 2, y, x / 2, MapGenerator.getHUDSize() / 2);
         StdDraw.setPenColor(StdDraw.WHITE);
         StdDraw.setFont(NORMAL_FONT);
         StdDraw.text(x / 2, y, "Game Finished!");
+        StdDraw.enableDoubleBuffering();
         StdDraw.show();
     }
 
     /** Uses StdDraw library to draw a screen associated to the user winning the game. */
-    private void drawWinningScreen(int x, int y) {
+    private void drawWinningScreen(int x, int y, int stepsTaken) {
         StdDraw.clear();
         StdDraw.setPenColor(new Color(69, 102, 34));
         StdDraw.setFont(TITLE_FONT);
         StdDraw.text(x / 2, y * 0.55, "Congrats, you won!");
-        StdDraw.text(x / 2, y * 0.45, "Press ':Q' to save and quit");
+        StdDraw.text(x / 2, y * 0.45, "You took a total of " + stepsTaken + " steps!");
+        StdDraw.text(x / 2, y * 0.1, "Press ':Q' to save and quit");
+        StdDraw.enableDoubleBuffering();
         StdDraw.show();
     }
 
     /** Uses StdDraw library to draw a screen associated to the user losing the game. */
-    private void drawLosingScreen(int x, int y) {
+    private void drawLosingScreen(int x, int y, int stepsTaken) {
         StdDraw.clear();
         StdDraw.setPenColor(new Color(69, 102, 34));
         StdDraw.setFont(TITLE_FONT);
         StdDraw.text(x / 2, y * 0.55, "You lost... Better luck next time!");
-        StdDraw.text(x / 2, y * 0.45, "Press 'Q' to quit");
+        StdDraw.text(x / 2, y * 0.45, "You've exhausted all " + stepsTaken + " steps!");
+        StdDraw.text(x / 2, y * 0.1, "Press 'Q' to quit");
+        StdDraw.enableDoubleBuffering();
         StdDraw.show();
     }
 

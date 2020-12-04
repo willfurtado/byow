@@ -15,6 +15,7 @@ public class Room {
     protected Point horizontalDoor;
     protected Point verticalDoor;
     protected Random random;
+    protected Point blockPoint;
 
     protected static final int MIN_SIDE_LENGTH = 6;
     protected static final int MAX_SIDE_LENGTH = 12;
@@ -36,6 +37,7 @@ public class Room {
         this.lowerRight = getLowerRight(width, lowerLeft);
         this.horizontalDoor = getHorizontalDoor();
         this.verticalDoor = getVerticalDoor();
+        this.blockPoint = new Point(verticalDoor.getX(), horizontalDoor.getY());
     }
 
     /** Returns a random side length (Integer) that is between the specified range. */

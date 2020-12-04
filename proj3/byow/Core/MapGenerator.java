@@ -16,14 +16,18 @@ public class MapGenerator {
     protected static final int STARTINGHEIGHT = 41;
     protected static final int HUDSIZE = 4;
     protected static final int HEIGHT = (STARTINGHEIGHT + HUDSIZE);
-    protected static final int SCORELIMIT = 5;
+    protected static final int SCORELIMIT = 10;
+    protected static final int STEPLIMIT = 100;
 
     protected Random random;
     protected ArrayList<Room> rooms = new ArrayList<>();
     protected Point avatarPosition;
     protected int score;
-    protected int stepsRemaining = 75;
+    protected int stepsRemaining = STEPLIMIT;
     protected boolean wonGame;
+    protected TETile avatarTile = Tileset.OSKI;
+    protected TETile landTile = Tileset.LAND;
+    protected  TETile oceanTile = Tileset.OCEAN;
 
     /** Creates an instance of the MapGenerator class with a given integer seed. To be used
      * within the Engine class and Main class. */
@@ -49,20 +53,20 @@ public class MapGenerator {
         return world;
     }
 
-    /** Iterates through all tiles within the world and fills them with Tileset.OCEAN. */
+    /** Iterates through all tiles within the world and fills them with oceanTile. */
     public void setEmptyWorld(TETile[][] world) {
         setWorldBuffer(world);
         for (int x = 0; x < WIDTH; x += 1) {
             for (int y = 0; y < STARTINGHEIGHT; y += 1) {
-                world[x][y] = Tileset.OCEAN;
+                world[x][y] = oceanTile;
             }
         }
     }
 
-    /** Sets the given Point p within the 2D-Representation of the world to Tileset.OSKI. */
+    /** Sets the given Point p within the 2D-Representation of the world to avatarTile. */
     public void setAvatarPosition(TETile[][] world, Point p) {
         this.avatarPosition = p;
-        world[avatarPosition.getX()][avatarPosition.getY()] = Tileset.OSKI;
+        world[avatarPosition.getX()][avatarPosition.getY()] = avatarTile;
     }
 
     /** Sets the given Point p within the 2D Tile array of the world to Tileset.TREASURE. */
@@ -77,29 +81,29 @@ public class MapGenerator {
     public void closeHallwayOpenings(TETile[][] world) {
         for (int x = 0; x < WIDTH; x++) {
             for (int y = 0; y < HEIGHT; y++) {
-                if (world[x][y] == Tileset.LAND) {
-                    if (world[x + 1][y] == Tileset.OCEAN) {
+                if (world[x][y] == landTile) {
+                    if (world[x + 1][y] == oceanTile) {
                         world[x + 1][y] = Tileset.SHORE;
                     }
-                    if (world[x - 1][y] == Tileset.OCEAN) {
+                    if (world[x - 1][y] == oceanTile) {
                         world[x - 1][y] = Tileset.SHORE;
                     }
-                    if (world[x][y + 1] == Tileset.OCEAN) {
+                    if (world[x][y + 1] == oceanTile) {
                         world[x][y + 1] = Tileset.SHORE;
                     }
-                    if (world[x][y - 1] == Tileset.OCEAN) {
+                    if (world[x][y - 1] == oceanTile) {
                         world[x][y - 1] = Tileset.SHORE;
                     }
-                    if (world[x + 1][y + 1] == Tileset.OCEAN) {
+                    if (world[x + 1][y + 1] == oceanTile) {
                         world[x + 1][y + 1] = Tileset.SHORE;
                     }
-                    if (world[x - 1][y - 1] == Tileset.OCEAN) {
+                    if (world[x - 1][y - 1] == oceanTile) {
                         world[x - 1][y - 1] = Tileset.SHORE;
                     }
-                    if (world[x - 1][y + 1] == Tileset.OCEAN) {
+                    if (world[x - 1][y + 1] == oceanTile) {
                         world[x - 1][y + 1] = Tileset.SHORE;
                     }
-                    if (world[x + 1][y - 1] == Tileset.OCEAN) {
+                    if (world[x + 1][y - 1] == oceanTile) {
                         world[x + 1][y - 1] = Tileset.SHORE;
                     }
                 }
@@ -107,26 +111,41 @@ public class MapGenerator {
         }
     }
 
-    /** Moves the corresponding Avatar up one position within the world. If the next move
-     * will be into a wall, then the program will prohibit its movement. */
-    public TETile[][] moveAvatarUp(TETile[][] world) {
-        Point currPoint = this.avatarPosition;
-        Point newPoint = new Point(currPoint.getX(), currPoint.getY() + 1);
+    /** Logic behind the rendering of the MapGenerator world attribute. */
+    private TETile[][] adjustWorldForMove(TETile[][] world, Point newPoint, Point currPoint) {
         if (world[newPoint.getX()][newPoint.getY()] == Tileset.COIN) {
             score++;
         }
-        if (world[newPoint.getX()][newPoint.getY()] == Tileset.OCEAN) {
+        if (world[newPoint.getX()][newPoint.getY()] == oceanTile) {
             world[newPoint.getX()][newPoint.getY()] = Tileset.SHORE;
         }
         if (world[newPoint.getX()][newPoint.getY()] != Tileset.SHORE
-                && world[newPoint.getX()][newPoint.getY()] != Tileset.OCEAN) {
-            world[currPoint.getX()][currPoint.getY()] = Tileset.LAND;
-            world[newPoint.getX()][newPoint.getY()] = Tileset.OSKI;
+                && world[newPoint.getX()][newPoint.getY()] != oceanTile) {
+            world[currPoint.getX()][currPoint.getY()] = landTile;
+            if (world[newPoint.getX()][newPoint.getY()] == Tileset.VORTEX) {
+                Room teleport = rooms.get(random.nextInt(rooms.size()));
+                while (teleport.blockPoint.equals(newPoint)) {
+                    teleport = rooms.get(random.nextInt(rooms.size()));
+                }
+                setAvatarPosition(world, teleport.blockPoint);
+                world[newPoint.getX()][newPoint.getY()] = landTile;
+                return world;
+            } else {
+                world[newPoint.getX()][newPoint.getY()] = avatarTile;
+            }
             this.stepsRemaining--;
             this.avatarPosition = newPoint;
         }
         checkFinish();
         return world;
+    }
+
+    /** Moves the corresponding Avatar up one position within the world. If the next move
+     * will be into a wall, then the program will prohibit its movement. */
+    public TETile[][] moveAvatarUp(TETile[][] world) {
+        Point currPoint = this.avatarPosition;
+        Point newPoint = new Point(currPoint.getX(), currPoint.getY() + 1);
+        return adjustWorldForMove(world, newPoint, currPoint);
     }
 
     /** Moves the corresponding Avatar down one position within the world. If the next move
@@ -134,21 +153,7 @@ public class MapGenerator {
     public TETile[][] moveAvatarDown(TETile[][] world) {
         Point currPoint = this.avatarPosition;
         Point newPoint = new Point(currPoint.getX(), currPoint.getY() - 1);
-        if (world[newPoint.getX()][newPoint.getY()] == Tileset.COIN) {
-            score++;
-        }
-        if (world[newPoint.getX()][newPoint.getY()] == Tileset.OCEAN) {
-            world[newPoint.getX()][newPoint.getY()] = Tileset.SHORE;
-        }
-        if (world[newPoint.getX()][newPoint.getY()] != Tileset.SHORE
-                && world[newPoint.getX()][newPoint.getY()] != Tileset.OCEAN) {
-            world[currPoint.getX()][currPoint.getY()] = Tileset.LAND;
-            world[newPoint.getX()][newPoint.getY()] = Tileset.OSKI;
-            this.stepsRemaining--;
-            this.avatarPosition = newPoint;
-        }
-        checkFinish();
-        return world;
+        return adjustWorldForMove(world, newPoint, currPoint);
     }
 
     /** Moves the corresponding Avatar left one position within the world. If the next move
@@ -156,21 +161,7 @@ public class MapGenerator {
     public TETile[][] moveAvatarLeft(TETile[][] world) {
         Point currPoint = this.avatarPosition;
         Point newPoint = new Point(currPoint.getX() - 1, currPoint.getY());
-        if (world[newPoint.getX()][newPoint.getY()] == Tileset.COIN) {
-            score++;
-        }
-        if (world[newPoint.getX()][newPoint.getY()] == Tileset.OCEAN) {
-            world[newPoint.getX()][newPoint.getY()] = Tileset.SHORE;
-        }
-        if (world[newPoint.getX()][newPoint.getY()] != Tileset.SHORE
-                && world[newPoint.getX()][newPoint.getY()] != Tileset.OCEAN) {
-            world[currPoint.getX()][currPoint.getY()] = Tileset.LAND;
-            world[newPoint.getX()][newPoint.getY()] = Tileset.OSKI;
-            this.stepsRemaining--;
-            this.avatarPosition = newPoint;
-        }
-        checkFinish();
-        return world;
+        return adjustWorldForMove(world, newPoint, currPoint);
     }
 
     /** Moves the corresponding Avatar right one position within the world. If the next move
@@ -178,23 +169,8 @@ public class MapGenerator {
     public TETile[][] moveAvatarRight(TETile[][] world) {
         Point currPoint = this.avatarPosition;
         Point newPoint = new Point(currPoint.getX() + 1, currPoint.getY());
-        if (world[newPoint.getX()][newPoint.getY()] == Tileset.COIN) {
-            score++;
-        }
-        if (world[newPoint.getX()][newPoint.getY()] == Tileset.OCEAN) {
-            world[newPoint.getX()][newPoint.getY()] = Tileset.SHORE;
-        }
-        if (world[newPoint.getX()][newPoint.getY()] != Tileset.SHORE
-                && world[newPoint.getX()][newPoint.getY()] != Tileset.OCEAN) {
-            world[currPoint.getX()][currPoint.getY()] = Tileset.LAND;
-            world[newPoint.getX()][newPoint.getY()] = Tileset.OSKI;
-            this.stepsRemaining--;
-            this.avatarPosition = newPoint;
-        }
-        checkFinish();
-        return world;
+        return adjustWorldForMove(world, newPoint, currPoint);
     }
-
 
     /** Sets wonGame to true if the SCORELIMIT is reached and false
      * if stepsRemaining equals zero. */
@@ -241,48 +217,48 @@ public class MapGenerator {
     }
 
     /** Checks each of the diagonal tiles respective to a given Point to see
-     * if they are Tileset.OCEAN. If this is the case, change them to Tileset.SHORE objects. */
+     * if they are oceanTile. If this is the case, change them to Tileset.SHORE objects. */
     public void fixTilesAroundHorizontalDoor(TETile[][] world, Point p) {
         int x = p.getX();
         int y = p.getY();
 
-        if (world[x - 1][y - 1] == Tileset.OCEAN) {
+        if (world[x - 1][y - 1] == oceanTile) {
             world[x - 1][y - 1] = Tileset.SHORE;
             world[x - 2][y - 1] = Tileset.SHORE;
         }
-        if (world[x - 1][y + 1] == Tileset.OCEAN) {
+        if (world[x - 1][y + 1] == oceanTile) {
             world[x - 1][y + 1] = Tileset.SHORE;
             world[x - 2][y + 1] = Tileset.SHORE;
         }
-        if (world[x + 1][y - 1] == Tileset.OCEAN) {
+        if (world[x + 1][y - 1] == oceanTile) {
             world[x + 1][y - 1] = Tileset.SHORE;
             world[x + 2][y - 1] = Tileset.SHORE;
         }
-        if (world[x + 1][y + 1] == Tileset.OCEAN) {
+        if (world[x + 1][y + 1] == oceanTile) {
             world[x + 1][y + 1] = Tileset.SHORE;
             world[x + 2][y + 1] = Tileset.SHORE;
         }
     }
 
     /** Checks each of the diagonal tiles respective to a given Point to see if they are
-     * Tileset.OCEAN. If this is the case, change them to Tileset.SHORE objects. */
+     * oceanTile. If this is the case, change them to Tileset.SHORE objects. */
     public void fixTilesAroundVerticalDoor(TETile[][] world, Point p) {
         int x = p.getX();
         int y = p.getY();
 
-        if (world[x - 1][y - 1] == Tileset.OCEAN) {
+        if (world[x - 1][y - 1] == oceanTile) {
             world[x - 1][y - 1] = Tileset.SHORE;
             world[x - 1][y - 2] = Tileset.SHORE;
         }
-        if (world[x - 1][y + 1] == Tileset.OCEAN) {
+        if (world[x - 1][y + 1] == oceanTile) {
             world[x - 1][y + 1] = Tileset.SHORE;
             world[x - 1][y + 2] = Tileset.SHORE;
         }
-        if (world[x + 1][y - 1] == Tileset.OCEAN) {
+        if (world[x + 1][y - 1] == oceanTile) {
             world[x + 1][y - 1] = Tileset.SHORE;
             world[x + 1][y - 2] = Tileset.SHORE;
         }
-        if (world[x + 1][y + 1] == Tileset.OCEAN) {
+        if (world[x + 1][y + 1] == oceanTile) {
             world[x + 1][y + 1] = Tileset.SHORE;
             world[x + 1][y + 2] = Tileset.SHORE;
         }
@@ -350,16 +326,17 @@ public class MapGenerator {
         drawVerticalWalls(world, room);
         drawHorizontalWalls(world, room);
         openDoors(world, room);
+        placeBlocks(world, room);
     }
 
-    /** Lays down all Tileset.LAND tiles onto the given area of a Room instance. */
+    /** Lays down all landTile tiles onto the given area of a Room instance. */
     public void createFloor(TETile[][] world, Room inputRoom) {
         Point lowerLeft = inputRoom.lowerLeft;
         Point upperRight = inputRoom.upperRight;
 
         for (int x = lowerLeft.getX(); x < upperRight.getX(); x++) {
             for (int y = lowerLeft.getY(); y < upperRight.getY(); y++) {
-                world[x][y] = Tileset.LAND;
+                world[x][y] = landTile;
             }
         }
     }
@@ -395,15 +372,22 @@ public class MapGenerator {
         world[doorY.getX()][doorY.getY()] = Tileset.MOUNTAIN;
     }
 
+    /** Places a Tileset.SHORE tile within the middle of each room. */
+    public void placeBlocks(TETile[][] world, Room inputRoom) {
+        int blockPosX = inputRoom.blockPoint.getX();
+        int blockPosY = inputRoom.blockPoint.getY();
+        world[blockPosX][blockPosY] = Tileset.VORTEX;
+    }
+
     /** Starting at the given doorPosition of a Room instance, this method will build a
      * Hallway to the left until it arrives at a wall or at the edge of the screen. */
     public void tunnelLeft(TETile[][] world, Room inputRoom) {
         Point startingPoint = inputRoom.horizontalDoor;
         int startingX = startingPoint.getX();
         int startingY = startingPoint.getY();
-        while ((world[startingX][startingY] == Tileset.OCEAN
+        while ((world[startingX][startingY] == oceanTile
                 || world[startingX][startingY] == Tileset.MOUNTAIN) && startingX > 0) {
-            world[startingX][startingY] = Tileset.LAND;
+            world[startingX][startingY] = landTile;
             world[startingX][startingY - 1] = Tileset.SHORE;
             world[startingX][startingY + 1] = Tileset.SHORE;
             startingX--;
@@ -416,7 +400,7 @@ public class MapGenerator {
         } else if (world[startingX][startingY] == Tileset.LOCKED_DOOR) {
             fixCorners(world, startingX, startingY);
         } else {
-            world[startingX][startingY] = Tileset.LAND;
+            world[startingX][startingY] = landTile;
         }
     }
 
@@ -426,10 +410,10 @@ public class MapGenerator {
         Point startingPoint = inputRoom.horizontalDoor;
         int startingX = startingPoint.getX();
         int startingY = startingPoint.getY();
-        while ((world[startingX][startingY] == Tileset.OCEAN
+        while ((world[startingX][startingY] == oceanTile
                 || world[startingX][startingY] == Tileset.MOUNTAIN)
                 && startingX < MapGenerator.WIDTH - 1) {
-            world[startingX][startingY] = Tileset.LAND;
+            world[startingX][startingY] = landTile;
             world[startingX][startingY - 1] = Tileset.SHORE;
             world[startingX][startingY + 1] = Tileset.SHORE;
             startingX++;
@@ -439,7 +423,7 @@ public class MapGenerator {
         } else if (world[startingX][startingY] == Tileset.LOCKED_DOOR) {
             fixCorners(world, startingX, startingY);
         } else {
-            world[startingX][startingY] = Tileset.LAND;
+            world[startingX][startingY] = landTile;
         }
     }
 
@@ -449,10 +433,10 @@ public class MapGenerator {
         Point startingPoint = inputRoom.verticalDoor;
         int startingX = startingPoint.getX();
         int startingY = startingPoint.getY();
-        while ((world[startingX][startingY] == Tileset.OCEAN
+        while ((world[startingX][startingY] == oceanTile
                 || world[startingX][startingY] == Tileset.MOUNTAIN)
                 && startingY < MapGenerator.STARTINGHEIGHT - 1) {
-            world[startingX][startingY] = Tileset.LAND;
+            world[startingX][startingY] = landTile;
             world[startingX - 1][startingY] = Tileset.SHORE;
             world[startingX + 1][startingY] = Tileset.SHORE;
             startingY++;
@@ -462,7 +446,7 @@ public class MapGenerator {
         } else if (world[startingX][startingY] == Tileset.LOCKED_DOOR) {
             fixCorners(world, startingX, startingY);
         } else {
-            world[startingX][startingY] = Tileset.LAND;
+            world[startingX][startingY] = landTile;
         }
     }
 
@@ -472,10 +456,10 @@ public class MapGenerator {
         Point startingPoint = inputRoom.verticalDoor;
         int startingX = startingPoint.getX();
         int startingY = startingPoint.getY();
-        while ((world[startingX][startingY] == Tileset.OCEAN
+        while ((world[startingX][startingY] == oceanTile
                 || world[startingX][startingY] == Tileset.MOUNTAIN)
                 && startingY > 0) {
-            world[startingX][startingY] = Tileset.LAND;
+            world[startingX][startingY] = landTile;
             world[startingX - 1][startingY] = Tileset.SHORE;
             world[startingX + 1][startingY] = Tileset.SHORE;
             startingY--;
@@ -487,22 +471,22 @@ public class MapGenerator {
         } else if (world[startingX][startingY] == Tileset.LOCKED_DOOR) {
             fixCorners(world, startingX, startingY);
         } else {
-            world[startingX][startingY] = Tileset.LAND;
+            world[startingX][startingY] = landTile;
         }
     }
 
     /** Fixes Hallways that travel directly into the corners of a given room. */
     public void fixCorners(TETile[][] world, int x, int y) {
-        if (world[x - 1][y] == Tileset.OCEAN) {
+        if (world[x - 1][y] == oceanTile) {
             world[x - 1][y] = Tileset.SHORE;
         }
-        if (world[x + 1][y] == Tileset.OCEAN) {
+        if (world[x + 1][y] == oceanTile) {
             world[x + 1][y] = Tileset.SHORE;
         }
-        if (world[x][y - 1] == Tileset.OCEAN) {
+        if (world[x][y - 1] == oceanTile) {
             world[x][y - 1] = Tileset.SHORE;
         }
-        if (world[x][y + 1] == Tileset.OCEAN) {
+        if (world[x][y + 1] == oceanTile) {
             world[x][y + 1] = Tileset.SHORE;
         }
     }

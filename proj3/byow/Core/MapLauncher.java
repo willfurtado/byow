@@ -14,7 +14,7 @@ public class MapLauncher {
         TERenderer ter = new TERenderer();
         ter.initialize(MapGenerator.WIDTH, MapGenerator.HEIGHT);
 
-        MapGenerator mapGen = new MapGenerator(12345434352999L);
+        MapGenerator mapGen = new MapGenerator(1234552999);
         TETile[][] finalWorldFrame = mapGen.createWorld();
 
         ter.renderFrame(finalWorldFrame);

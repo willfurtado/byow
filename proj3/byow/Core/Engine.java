@@ -5,20 +5,25 @@ import byow.InputDemo.KeyboardInputSource;
 import byow.InputDemo.StringInputDevice;
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
+import byow.TileEngine.Tileset;
 import edu.princeton.cs.introcs.StdDraw;
 
 import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Scanner;
 
 public class Engine {
     TERenderer ter = new TERenderer();
     public static final int WIDTH = MapGenerator.WIDTH;
     public static final int HEIGHT = MapGenerator.HEIGHT;
-    public static final Font TITLE_FONT = new Font("Source Code Pro", Font.BOLD, 40);
-    public static final Font NORMAL_FONT = new Font("Source Code Pro", Font.PLAIN, 17);
+    private static final int STEP_LIMIT = MapGenerator.STEPLIMIT;
+    private static final int SCORE_LIMIT = MapGenerator.SCORELIMIT;
+    private static final int TILE_SIZE = 16;
+    public static final Font TITLE_FONT = new Font("Georgia", Font.BOLD, 40);
+    public static final Font NORMAL_FONT = new Font("Georgia", Font.PLAIN, 17);
     private boolean worldInitialized = false;
     private long SEED;
     private MapGenerator mapGen;
@@ -27,6 +32,7 @@ public class Engine {
     private boolean quitCheck = false;
     private boolean replayMode = false;
     private boolean gameOver = false;
+    private boolean oskiMode = false;
 
     /**
      * Method used for exploring a fresh world. This method should handle all inputs,
@@ -40,6 +46,7 @@ public class Engine {
         while (inputSource.possibleNextInput()) {
             char nextKey = inputSource.getNextKey();
             if (!worldInitialized) {
+
                 if (nextKey == 'N') {
                     saveWorld("");
                     inputSource = new KeyboardInputSource();
@@ -65,6 +72,12 @@ public class Engine {
             userInput += nextKey;
             if (!replayMode && !gameOver) {
                 moveAvatar(world, mapGen, nextKey, true);
+            }
+            if (nextKey == 'E') {
+                purchaseSteps(mapGen);
+            }
+            if (nextKey == 'O') {
+                oskiOverload();
             }
             if (nextKey == ':') {
                 this.quitCheck = true;
@@ -302,12 +315,13 @@ public class Engine {
             ter.renderHUD(inWorld, inMapGen.score, inMapGen.stepsRemaining);
         }
         if (inMapGen.score == MapGenerator.SCORELIMIT) {
-            ter.renderFinishScreen(true);
+            int stepsTaken = STEP_LIMIT - inMapGen.stepsRemaining;
+            ter.renderFinishScreen(true, stepsTaken);
             gameOver = true;
         } else if (inMapGen.stepsRemaining <= 0) {
             gameOver = true;
             saveWorld("");
-            ter.renderFinishScreen(false);
+            ter.renderFinishScreen(false, STEP_LIMIT);
 
         }
     }
@@ -330,18 +344,24 @@ public class Engine {
 
     /** Outputs the initial loading screen of our world generation game. */
     private void drawLoadingScreen() {
+        StdDraw.setCanvasSize(WIDTH * TILE_SIZE, (HEIGHT * TILE_SIZE));
         edu.princeton.cs.introcs.StdDraw.setPenColor(new Color(69, 102, 34));
         edu.princeton.cs.introcs.StdDraw.filledSquare(0, 0, 1);
         edu.princeton.cs.introcs.StdDraw.setPenColor(Color.white);
         edu.princeton.cs.introcs.StdDraw.setFont(TITLE_FONT);
-        edu.princeton.cs.introcs.StdDraw.text(0.5, 0.65, "CS61B: The Game");
+        edu.princeton.cs.introcs.StdDraw.text(0.5, 0.75, "CS61B: The Game");
         edu.princeton.cs.introcs.StdDraw.setFont(NORMAL_FONT);
-        edu.princeton.cs.introcs.StdDraw.text(0.5, 0.35, "New Game: (N)");
-        edu.princeton.cs.introcs.StdDraw.text(0.5, 0.3, "Load Game: (L)");
-        edu.princeton.cs.introcs.StdDraw.text(0.5, 0.25, "Replay Last Game: (R)");
-        edu.princeton.cs.introcs.StdDraw.text(0.5, 0.2, "Quit: (Q)");
+        edu.princeton.cs.introcs.StdDraw.text(0.5, 0.3, "New Game: (N)");
+        edu.princeton.cs.introcs.StdDraw.text(0.5, 0.25, "Load Game: (L)");
+        edu.princeton.cs.introcs.StdDraw.text(0.5, 0.2, "Replay Last Game: (R)");
+        edu.princeton.cs.introcs.StdDraw.text(0.5, 0.15, "Quit: (Q)");
+        edu.princeton.cs.introcs.StdDraw.text(0.5, 0.45,
+                "Be Warned: Portals Can Teleport You Across The Map");
         edu.princeton.cs.introcs.StdDraw.text(0.5, 0.5,
-                "Objective: collect 5 coins within 75 steps");
+                "Objective: Collect " + SCORE_LIMIT +  " Coins Within " +  STEP_LIMIT +  " Steps");
+
+        StdDraw.enableDoubleBuffering();
+        StdDraw.show();
     }
 
     /** Draws the initial landing screen to the page. */
@@ -354,6 +374,9 @@ public class Engine {
         edu.princeton.cs.introcs.StdDraw.text(0.5, 0.75, "Enter Random Number:");
         edu.princeton.cs.introcs.StdDraw.text(0.5, 0.5, seed);
         edu.princeton.cs.introcs.StdDraw.text(0.5, 0.25, "Press 'S' to Create World");
+
+        StdDraw.enableDoubleBuffering();
+        StdDraw.show();
     }
 
     /** Initializes the TERenderer object using respective WIDTH, HEIGHT and renders the world. */
@@ -390,4 +413,33 @@ public class Engine {
             e.printStackTrace();
         }
     }
+
+    /** Reduces user's score by 2 in exchange for 25 extra steps */
+    private void purchaseSteps(MapGenerator mapGen) {
+        if (mapGen.score < 2) {
+            return;
+        }
+        mapGen.score -= 2;
+        mapGen.stepsRemaining += 25;
+    }
+
+    /** Overloads the game with oski. */
+    private void oskiOverload() {
+        for (int y = HEIGHT - 1; y >= 0; y--) {
+            for (int x = 0; x < WIDTH; x++) {
+                world[x][y] = Tileset.OSKI;
+            }
+            ter.renderFrame(world);
+            StdDraw.pause(2);
+        }
+        StdDraw.pause(1000);
+        StdDraw.clear();
+        StdDraw.setFont(TITLE_FONT);
+        StdDraw.setPenColor(new Color(69, 102, 34));
+        StdDraw.text(WIDTH / 2, HEIGHT / 2, "Nice try...");
+        StdDraw.show();
+        StdDraw.pause(1000);
+        quitGame();
+    }
+
 }
