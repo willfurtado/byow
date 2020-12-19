@@ -76,7 +76,7 @@ public class Engine {
                 moveAvatar(world, mapGen, nextKey, true);
             }
             if (nextKey == 'E') {
-                purchaseSteps(mapGen);
+                mapGen.purchaseSteps();
             }
             if (nextKey == 'O') {
                 drawer.oskiOverload();
@@ -337,15 +337,6 @@ public class Engine {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    /** Reduces user's score by 2 in exchange for 25 extra steps */
-    private void purchaseSteps(MapGenerator mapGen) {
-        if (mapGen.score < 2) {
-            return;
-        }
-        mapGen.score -= 2;
-        mapGen.stepsRemaining += 25;
     }
 
     /** Saves the given content (in the form of a String) to a file called savedWorld.txt. */

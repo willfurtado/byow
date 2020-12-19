@@ -172,6 +172,15 @@ public class MapGenerator {
         return adjustWorldForMove(world, newPoint, currPoint);
     }
 
+    /** Reduces user's score by 2 in exchange for 25 extra steps */
+    protected void purchaseSteps() {
+        if (this.score < 2) {
+            return;
+        }
+        this.score -= 2;
+        this.stepsRemaining += 25;
+    }
+
     /** Sets wonGame to true if the SCORELIMIT is reached and false
      * if stepsRemaining equals zero. */
     public void checkFinish() {
