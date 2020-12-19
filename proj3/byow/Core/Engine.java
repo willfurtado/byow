@@ -5,34 +5,36 @@ import byow.InputDemo.KeyboardInputSource;
 import byow.InputDemo.StringInputDevice;
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
-import byow.TileEngine.Tileset;
 import edu.princeton.cs.introcs.StdDraw;
 
 import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Map;
 import java.util.Scanner;
 
 public class Engine {
     TERenderer ter = new TERenderer();
+    HUD hud = new HUD();
+
     public static final int WIDTH = MapGenerator.WIDTH;
     public static final int HEIGHT = MapGenerator.HEIGHT;
-    private static final int STEP_LIMIT = MapGenerator.STEPLIMIT;
-    private static final int SCORE_LIMIT = MapGenerator.SCORELIMIT;
-    private static final int TILE_SIZE = 16;
-    public static final Font TITLE_FONT = new Font("Georgia", Font.BOLD, 40);
-    public static final Font NORMAL_FONT = new Font("Georgia", Font.PLAIN, 17);
-    private boolean worldInitialized = false;
-    private long SEED;
-    private MapGenerator mapGen;
-    private TETile[][] world;
-    private String userInput = "";
-    private boolean quitCheck = false;
-    private boolean replayMode = false;
-    private boolean gameOver = false;
-    private boolean oskiMode = false;
+    protected static final int STEP_LIMIT = MapGenerator.STEPLIMIT;
+    protected static final int SCORE_LIMIT = MapGenerator.SCORELIMIT;
+    protected static final int TILE_SIZE = 16;
+    protected static final Font TITLE_FONT = new Font("Georgia", Font.BOLD, 40);
+    protected static final Font NORMAL_FONT = new Font("Georgia", Font.PLAIN, 17);
+
+    protected long SEED;
+    protected MapGenerator mapGen;
+    protected TETile[][] world;
+    protected String userInput = "";
+    protected boolean quitCheck = false;
+    protected boolean replayMode = false;
+    protected boolean gameOver = false;
+    protected boolean worldInitialized = false;
+
+    ScreenDrawer drawer = new ScreenDrawer(this);
 
     /**
      * Method used for exploring a fresh world. This method should handle all inputs,
@@ -41,7 +43,7 @@ public class Engine {
     public void interactWithKeyboard() {
         InputSource inputSource = new KeyboardInputSource();
         String seed = "";
-        drawLoadingScreen();
+        drawer.drawLoadingScreen();
 
         while (inputSource.possibleNextInput()) {
             char nextKey = inputSource.getNextKey();
@@ -50,16 +52,16 @@ public class Engine {
                 if (nextKey == 'N') {
                     saveWorld("");
                     inputSource = new KeyboardInputSource();
-                    drawSeedPromptScreen(seed);
+                    drawer.drawSeedPromptScreen(seed);
                     nextKey = inputSource.getNextKey();
                     while (nextKey != 'S') {
                         seed += nextKey;
-                        drawSeedPromptScreen(seed);
+                        drawer.drawSeedPromptScreen(seed);
                         nextKey = inputSource.getNextKey();
                     }
                     this.SEED = Long.parseLong(seed);
                     userInput += this.SEED + ":";
-                    drawGameScreen();
+                    drawer.drawGameScreen();
                 } else if (nextKey == 'L') {
                     loadPreviousGame(true);
                 } else if (nextKey == 'R') {
@@ -77,7 +79,7 @@ public class Engine {
                 purchaseSteps(mapGen);
             }
             if (nextKey == 'O') {
-                oskiOverload();
+                drawer.oskiOverload();
             }
             if (nextKey == ':') {
                 this.quitCheck = true;
@@ -90,13 +92,13 @@ public class Engine {
                 quitGame();
             }
             if (gameOver && !replayMode) {
-                ter.renderHUDFinish();
+                hud.renderHUDFinish();
             }
 
             while (!StdDraw.hasNextKeyTyped() && !replayMode
                     && mapGen.score != MapGenerator.SCORELIMIT
                     && !gameOver) {
-                ter.renderHUD(world, mapGen.getScore(), mapGen.getStepsRemaining());
+                hud.renderHUD(world, mapGen.getScore(), mapGen.getStepsRemaining());
             }
         }
     }
@@ -209,7 +211,7 @@ public class Engine {
                 scannedMovement = scanner.next();
                 scanner.next(); // removes the Q
             }
-            drawReplayLoadingScreen();
+            drawer.drawReplayLoadingScreen();
             InputSource loadingSource = new KeyboardInputSource();
             if (loadingSource.getNextKey() == 'R') {
                 ter.initialize(WIDTH, HEIGHT);
@@ -217,10 +219,10 @@ public class Engine {
                 mapGen = new MapGenerator(Long.parseLong(scannedSeed));
                 world = mapGen.createWorld();
                 ter.renderFrame(world);
-                ter.renderHUDReplay(world, mapGen.score, mapGen.stepsRemaining);
+                hud.renderHUDReplay(world, mapGen.score, mapGen.stepsRemaining);
 
                 while (!StdDraw.hasNextKeyTyped()) {
-                    ter.renderHUDReplay(world, mapGen.score, mapGen.stepsRemaining);
+                    hud.renderHUDReplay(world, mapGen.score, mapGen.stepsRemaining);
                 }
 
                 for (int i = 1; i < scannedMovement.length(); i++) {
@@ -229,7 +231,7 @@ public class Engine {
                     if (nextMove == 'C') {
                         char c = scannedMovement.charAt(i);
                         moveAvatar(world, mapGen, c, true);
-                        ter.renderHUDReplay(world, mapGen.score, mapGen.stepsRemaining);
+                        hud.renderHUDReplay(world, mapGen.score, mapGen.stepsRemaining);
                     }
                     if (nextMove == 'Q') {
                         quitGame();
@@ -237,7 +239,7 @@ public class Engine {
 
                 }
                 if (!StdDraw.hasNextKeyTyped()) {
-                    ter.renderHUDFinishReplay();
+                    hud.renderHUDFinishReplay();
                 }
             }
 
@@ -283,21 +285,6 @@ public class Engine {
         }
     }
 
-    private void drawReplayLoadingScreen() {
-        edu.princeton.cs.introcs.StdDraw.clear();
-        edu.princeton.cs.introcs.StdDraw.setPenColor(new Color(69, 102, 34));
-        edu.princeton.cs.introcs.StdDraw.filledSquare(0, 0, 1);
-        edu.princeton.cs.introcs.StdDraw.setPenColor(Color.white);
-        edu.princeton.cs.introcs.StdDraw.setFont(TITLE_FONT);
-        edu.princeton.cs.introcs.StdDraw.text(0.5, 0.75, "Instant Replay Zone");
-        edu.princeton.cs.introcs.StdDraw.setFont(NORMAL_FONT);
-        edu.princeton.cs.introcs.StdDraw.text(0.5, 0.40, "Press 'R' to enter Replay Mode");
-        edu.princeton.cs.introcs.StdDraw.text(0.5, 0.15, "While in Replay Mode, "
-                + "press 'C' to see next move");
-        edu.princeton.cs.introcs.StdDraw.text(0.5, 0.10, "While in Replay Mode, "
-                + "press 'Q' to quit the game");
-    }
-
     /** Moves the avatar pieces within the given inputWorld using the given input MapGenerator
      * object and will render depending on the boolean passed into the method. */
     private void moveAvatar(TETile[][] inWorld, MapGenerator inMapGen, char key, boolean render) {
@@ -312,80 +299,18 @@ public class Engine {
         }
         if (render) {
             ter.renderFrame(inWorld);
-            ter.renderHUD(inWorld, inMapGen.score, inMapGen.stepsRemaining);
+            hud.renderHUD(inWorld, inMapGen.score, inMapGen.stepsRemaining);
         }
         if (inMapGen.score == MapGenerator.SCORELIMIT) {
             int stepsTaken = STEP_LIMIT - inMapGen.stepsRemaining;
-            ter.renderFinishScreen(true, stepsTaken);
+            drawer.renderFinishScreen(true, stepsTaken);
             gameOver = true;
         } else if (inMapGen.stepsRemaining <= 0) {
             gameOver = true;
             saveWorld("");
-            ter.renderFinishScreen(false, STEP_LIMIT);
+            drawer.renderFinishScreen(false, STEP_LIMIT);
 
         }
-    }
-
-    /** Saves the given content (in the form of a String) to a file called savedWorld.txt. */
-    private void saveWorld(String content) {
-        try {
-            FileWriter fileWriter = new FileWriter("savedWorld.txt");
-            fileWriter.write(content);
-            fileWriter.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /** Exits the current game. */
-    private void quitGame() {
-        System.exit(0);
-    }
-
-    /** Outputs the initial loading screen of our world generation game. */
-    private void drawLoadingScreen() {
-        StdDraw.setCanvasSize(WIDTH * TILE_SIZE, (HEIGHT * TILE_SIZE));
-        edu.princeton.cs.introcs.StdDraw.setPenColor(new Color(69, 102, 34));
-        edu.princeton.cs.introcs.StdDraw.filledSquare(0, 0, 1);
-        edu.princeton.cs.introcs.StdDraw.setPenColor(Color.white);
-        edu.princeton.cs.introcs.StdDraw.setFont(TITLE_FONT);
-        edu.princeton.cs.introcs.StdDraw.text(0.5, 0.75, "CS61B: The Game");
-        edu.princeton.cs.introcs.StdDraw.setFont(NORMAL_FONT);
-        edu.princeton.cs.introcs.StdDraw.text(0.5, 0.3, "New Game: (N)");
-        edu.princeton.cs.introcs.StdDraw.text(0.5, 0.25, "Load Game: (L)");
-        edu.princeton.cs.introcs.StdDraw.text(0.5, 0.2, "Replay Last Game: (R)");
-        edu.princeton.cs.introcs.StdDraw.text(0.5, 0.15, "Quit: (Q)");
-        edu.princeton.cs.introcs.StdDraw.text(0.5, 0.45,
-                "Be Warned: Portals Can Teleport You Across The Map");
-        edu.princeton.cs.introcs.StdDraw.text(0.5, 0.5,
-                "Objective: Collect " + SCORE_LIMIT +  " Coins Within " +  STEP_LIMIT +  " Steps");
-
-        StdDraw.enableDoubleBuffering();
-        StdDraw.show();
-    }
-
-    /** Draws the initial landing screen to the page. */
-    private void drawSeedPromptScreen(String seed) {
-        edu.princeton.cs.introcs.StdDraw.clear();
-        edu.princeton.cs.introcs.StdDraw.setPenColor(new Color(69, 102, 34));
-        edu.princeton.cs.introcs.StdDraw.filledSquare(0, 0, 1);
-        edu.princeton.cs.introcs.StdDraw.setPenColor(Color.white);
-        edu.princeton.cs.introcs.StdDraw.setFont(NORMAL_FONT);
-        edu.princeton.cs.introcs.StdDraw.text(0.5, 0.75, "Enter Random Number:");
-        edu.princeton.cs.introcs.StdDraw.text(0.5, 0.5, seed);
-        edu.princeton.cs.introcs.StdDraw.text(0.5, 0.25, "Press 'S' to Create World");
-
-        StdDraw.enableDoubleBuffering();
-        StdDraw.show();
-    }
-
-    /** Initializes the TERenderer object using respective WIDTH, HEIGHT and renders the world. */
-    private void drawGameScreen() {
-        ter.initialize(WIDTH, HEIGHT);
-        this.mapGen = new MapGenerator(this.SEED);
-        this.world =  mapGen.createWorld();
-        worldInitialized = true;
-        ter.renderFrame(world);
     }
 
     /** Using the contents of the text file savedWorld, this method will read off the current
@@ -423,23 +348,19 @@ public class Engine {
         mapGen.stepsRemaining += 25;
     }
 
-    /** Overloads the game with oski. */
-    private void oskiOverload() {
-        for (int y = HEIGHT - 1; y >= 0; y--) {
-            for (int x = 0; x < WIDTH; x++) {
-                world[x][y] = Tileset.OSKI;
-            }
-            ter.renderFrame(world);
-            StdDraw.pause(2);
+    /** Saves the given content (in the form of a String) to a file called savedWorld.txt. */
+    private void saveWorld(String content) {
+        try {
+            FileWriter fileWriter = new FileWriter("savedWorld.txt");
+            fileWriter.write(content);
+            fileWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        StdDraw.pause(1000);
-        StdDraw.clear();
-        StdDraw.setFont(TITLE_FONT);
-        StdDraw.setPenColor(new Color(69, 102, 34));
-        StdDraw.text(WIDTH / 2, HEIGHT / 2, "Nice try...");
-        StdDraw.show();
-        StdDraw.pause(1000);
-        quitGame();
     }
 
+    /** Exits the current game. */
+    private void quitGame() {
+        System.exit(0);
+    }
 }
